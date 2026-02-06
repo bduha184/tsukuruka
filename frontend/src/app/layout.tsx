@@ -1,0 +1,20 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'つくりおき',
+  description: '作りたい料理を思い出させるアプリ',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="ja">
+      <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif' }}>
+        {children}
+      </body>
+    </html>
+  )
+}
