@@ -16,6 +16,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
   backend:
     build:
       context: ./backend
@@ -29,14 +30,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - /app/tmp
+
   frontend:
+    container_name: frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: tsukuruka-frontend
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8080
     ports:

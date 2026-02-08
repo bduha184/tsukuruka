@@ -1,7 +1,5 @@
--- UUID拡張
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- カテゴリテーブル
 CREATE TABLE categories (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -9,7 +7,6 @@ CREATE TABLE categories (
     eating_out_cost INTEGER NOT NULL
 );
 
--- 初期データ
 INSERT INTO categories (id, name, icon, eating_out_cost) VALUES
     ('ramen', 'ラーメン', '🍜', 900),
     ('pasta', 'パスタ', '🍝', 1000),
