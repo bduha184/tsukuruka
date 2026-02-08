@@ -2,25 +2,95 @@
 
 package model
 
-type Mutation struct {
+import (
+	"fmt"
+	"io"
+	"strconv"
+	"time"
+)
+
+type Category struct {
+	ID            string `json:"id"`
+	Name          string `json:"name"`
+	Icon          string `json:"icon"`
+	EatingOutCost int    `json:"eatingOutCost"`
 }
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+type CreateRecipeInput struct {
+	URL           string  `json:"url"`
+	Title         *string `json:"title,omitempty"`
+	ThumbnailURL  *string `json:"thumbnailUrl,omitempty"`
+	Platform      *string `json:"platform,omitempty"`
+	CategoryID    *string `json:"categoryId,omitempty"`
+	EstimatedCost *int    `json:"estimatedCost,omitempty"`
+}
+
+type Health struct {
+	Status    string    `json:"status"`
+	Database  string    `json:"database"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type Mutation struct {
 }
 
 type Query struct {
 }
 
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
+type Recipe struct {
+	ID            string       `json:"id"`
+	URL           string       `json:"url"`
+	Title         *string      `json:"title,omitempty"`
+	ThumbnailURL  *string      `json:"thumbnailUrl,omitempty"`
+	Platform      *string      `json:"platform,omitempty"`
+	Category      *Category    `json:"category,omitempty"`
+	EstimatedCost *int         `json:"estimatedCost,omitempty"`
+	EatingOutCost *int         `json:"eatingOutCost,omitempty"`
+	Status        RecipeStatus `json:"status"`
+	SuggestedAt   *string      `json:"suggestedAt,omitempty"`
+	CreatedAt     time.Time    `json:"createdAt"`
+	UpdatedAt     time.Time    `json:"updatedAt"`
 }
 
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type RecipeStatus string
+
+const (
+	RecipeStatusSaved   RecipeStatus = "SAVED"
+	RecipeStatusCooked  RecipeStatus = "COOKED"
+	RecipeStatusDeleted RecipeStatus = "DELETED"
+)
+
+var AllRecipeStatus = []RecipeStatus{
+	RecipeStatusSaved,
+	RecipeStatusCooked,
+	RecipeStatusDeleted,
+}
+
+func (e RecipeStatus) IsValid() bool {
+	switch e {
+	case RecipeStatusSaved, RecipeStatusCooked, RecipeStatusDeleted:
+		return true
+	}
+	return false
+}
+
+func (e RecipeStatus) String() string {
+	return string(e)
+}
+
+func (e *RecipeStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RecipeStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RecipeStatus", str)
+	}
+	return nil
+}
+
+func (e RecipeStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

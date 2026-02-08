@@ -1,6 +1,8 @@
 module github.com/bduha184/tsukuruka
 
-go 1.22.12
+go 1.23
+
+toolchain go1.23.12
 
 require (
 	github.com/99designs/gqlgen v0.17.45
@@ -20,7 +22,8 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/sosodev/duration v1.2.0 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/crypto v0.28.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 )
