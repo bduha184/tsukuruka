@@ -1,19 +1,29 @@
-module github.com/tsukuruka/tsukuruka-backend
+module github.com/bduha184/tsukuruka
 
-go 1.25.7
+go 1.23
+
+toolchain go1.23.12
 
 require (
-	github.com/99designs/gqlgen v0.17.86
+	github.com/99designs/gqlgen v0.17.45
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-chi/cors v1.2.2
-	github.com/vektah/gqlparser/v2 v2.5.31
+	github.com/jackc/pgx/v5 v5.5.5
+	github.com/vektah/gqlparser/v2 v2.5.11
 )
 
 require (
-	github.com/agnivade/levenshtein v1.2.1 // indirect
-	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
+	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
-	github.com/sosodev/duration v1.3.1 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/puddle/v2 v2.2.1 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/sosodev/duration v1.2.0 // indirect
+	golang.org/x/crypto v0.28.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 )

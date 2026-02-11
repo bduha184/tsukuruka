@@ -1,24 +1,68 @@
-type Todo {
-  id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
+# つくりおき GraphQL Schema
+
+scalar Time
+
+# ========== Types ==========
+
+type Health {
+  status: String!
+  database: String!
+  timestamp: Time!
 }
 
-type User {
+type Category {
   id: ID!
   name: String!
+  icon: String!
+  eatingOutCost: Int!
 }
+
+type Recipe {
+  id: ID!
+  url: String!
+  title: String
+  thumbnailUrl: String
+  platform: String
+  category: Category
+  estimatedCost: Int
+  eatingOutCost: Int
+  status: RecipeStatus!
+  suggestedAt: String
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+enum RecipeStatus {
+  SAVED
+  COOKED
+  DELETED
+}
+
+# ========== Queries ==========
 
 type Query {
-  todos: [Todo!]!
+  health: Health!
+  categories: [Category!]!
+  recipes(status: RecipeStatus): [Recipe!]!
+  recipe(id: ID!): Recipe
+  todayRecipe: Recipe
 }
 
-input NewTodo {
-  text: String!
-  userId: String!
-}
+# ========== Mutations ==========
 
 type Mutation {
-  createTodo(input: NewTodo!): Todo!
+  createRecipe(input: CreateRecipeInput!): Recipe!
+  updateRecipeStatus(id: ID!, status: RecipeStatus!): Recipe!
+  deleteRecipe(id: ID!): Boolean!
+}
+
+# ========== Inputs ==========
+
+input CreateRecipeInput {
+  url: String!
+  title: String
+  thumbnailUrl: String
+  platform: String
+  categoryId: String
+  estimatedCost: Int
 }

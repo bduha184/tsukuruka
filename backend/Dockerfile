@@ -1,17 +1,24 @@
-FROM golang:1.25.7-alpine
-
+# ==========ビルド==========
+FROM golang:1.23-alpine AS builder
 WORKDIR /app
-
-# Git（一部パッケージで必要）
 RUN apk add --no-cache git
-
-# go.mod, go.sumをコピー
 COPY go.mod go.sum ./
 RUN go mod download
-
-# ソースコードをコピー
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app .
 
+# ==========開発==========
+FROM golang:1.23-alpine AS dev
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
 EXPOSE 8080
+CMD ["go", "run", "."]
 
-CMD ["go", "run", "server.go"]
+# ==========本番==========
+FROM debian:bullseye-slim AS prod
+WORKDIR /app
+COPY --from=builder /app/app .
+EXPOSE 8080
+CMD ["./app"]

@@ -1,7 +1,9 @@
 services:
   backend:
+    container_name: tsukuruka-backend
     build:
       context: ./backend
+      target: dev
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/tsukuruka?sslmode=disable
       PORT: 8080
@@ -11,30 +13,37 @@ services:
       - app-network
     depends_on:
       - db
-
   web:
+    container_name: tsukuruka-web
     build:
       context: ./frontend/web
+      target: dev
+    env_file:
+      - ./frontend/web/.env.local
+    ports:
+      - "3000:3000"
     networks:
       - app-network
     depends_on:
       - backend
-
-  # mobile:
-  #   build:
-  #     context: ./frontend/mobile
-  #   networks:
-  #     - app-network
-  #   depends_on:
-  #     - backend
-
+    volumes:
+      - ./frontend/web/src:/app/src
   db:
+    container_name: tsukuruka-db
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: tsukuruka
+    ports:
+      - "5432:5432"
     networks:
       - app-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+volumes:
+  postgres_data:
+
 networks:
   app-network:
