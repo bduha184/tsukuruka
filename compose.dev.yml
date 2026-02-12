@@ -13,6 +13,22 @@ services:
       - app-network
     depends_on:
       - db
+  mobile:
+    build:
+      context: ./frontend/mobile
+      target: dev
+    volumes:
+      - ./frontend/mobile/src:/app/src
+    env_file:
+      - ./frontend/mobile/.env.dev
+    ports:
+      - "19000:19000"
+      - "19001:19001"
+      - "19002:19002"
+    networks:
+      - app-network
+    depends_on:
+      - backend
   web:
     container_name: tsukuruka-web
     build:

@@ -20,13 +20,13 @@ services:
     depends_on:
       - backend
 
-  # mobile:
-  #   build:
-  #     context: ./frontend/mobile
-  #   networks:
-  #     - app-network
-  #   depends_on:
-  #     - backend
+  mobile:
+    build:
+      context: ./frontend/mobile
+    networks:
+      - app-network
+    depends_on:
+      - backend
 
   db:
     image: postgres:16-alpine
