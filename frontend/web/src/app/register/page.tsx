@@ -1,24 +1,29 @@
-
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation, useQuery } from '@apollo/client/react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
+import RecipeImage from '@/components/RecipeImage'
 import {
   CREATE_RECIPE_MUTATION,
   CATEGORIES_QUERY,
   RECIPES_QUERY
 } from '@/lib/graphql'
-import { Category } from '@/types/graphql'
+import { Category } from '@/lib/types'
+import { fetchOGP, OGPData } from '@/lib/ogp'
 
 export default function RegisterPage() {
   const router = useRouter()
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
+  const [thumbnailUrl, setThumbnailUrl] = useState('')
+  const [platform, setPlatform] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [estimatedCost, setEstimatedCost] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isFetchingOGP, setIsFetchingOGP] = useState(false)
+  const [ogpFetched, setOgpFetched] = useState(false)
 
   const { data: categoriesData } = useQuery<{ categories: Category[] }>(CATEGORIES_QUERY)
   const categories = categoriesData?.categories || []
@@ -26,6 +31,53 @@ export default function RegisterPage() {
   const [createRecipe] = useMutation(CREATE_RECIPE_MUTATION, {
     refetchQueries: [{ query: RECIPES_QUERY }],
   })
+
+  // URL変更時にOGPを自動取得
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (url && isValidUrl(url) && !ogpFetched) {
+        await handleFetchOGP()
+      }
+    }, 500) // 500ms debounce
+
+    return () => clearTimeout(timer)
+  }, [url])
+
+  const isValidUrl = (str: string) => {
+    try {
+      new URL(str)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const handleFetchOGP = async () => {
+    if (!url || !isValidUrl(url)) return
+
+    setIsFetchingOGP(true)
+    try {
+      const ogp = await fetchOGP(url)
+      if (ogp) {
+        if (ogp.title && !title) setTitle(ogp.title)
+        if (ogp.image && !thumbnailUrl) setThumbnailUrl(ogp.image)
+        if (ogp.platform && !platform) setPlatform(ogp.platform)
+        setOgpFetched(true)
+      }
+    } catch (error) {
+      console.error('OGP fetch error:', error)
+    } finally {
+      setIsFetchingOGP(false)
+    }
+  }
+
+  const handleUrlChange = (newUrl: string) => {
+    setUrl(newUrl)
+    // URL変更時はOGP取得フラグをリセット
+    if (newUrl !== url) {
+      setOgpFetched(false)
+    }
+  }
 
   const handleSubmit = async () => {
     if (!url) return
@@ -37,6 +89,8 @@ export default function RegisterPage() {
           input: {
             url,
             title: title || null,
+            thumbnailUrl: thumbnailUrl || null,
+            platform: platform || null,
             categoryId: categoryId || null,
             estimatedCost: estimatedCost ? parseInt(estimatedCost) : null,
           },
@@ -74,11 +128,34 @@ export default function RegisterPage() {
               <input
                 type="url"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(e) => handleUrlChange(e.target.value)}
                 placeholder="https://youtube.com/watch?v=..."
                 style={styles.input}
               />
+              {isFetchingOGP && (
+                <p style={styles.fetchingText}>📡 情報を取得中...</p>
+              )}
             </div>
+
+            {/* プレビュー */}
+            {(thumbnailUrl || title) && (
+              <div style={styles.preview}>
+                <p style={styles.previewLabel}>プレビュー</p>
+                <div style={styles.previewCard}>
+                  <RecipeImage
+                    src={thumbnailUrl}
+                    alt={title || ''}
+                    height={160}
+                  />
+                  <div style={styles.previewInfo}>
+                    {platform && (
+                      <span style={styles.previewPlatform}>{platform}</span>
+                    )}
+                    <p style={styles.previewTitle}>{title || '無題'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* タイトル入力 */}
             <div style={styles.field}>
@@ -88,6 +165,30 @@ export default function RegisterPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="料理名を入力"
+                style={styles.input}
+              />
+            </div>
+
+            {/* サムネイルURL */}
+            <div style={styles.field}>
+              <label style={styles.label}>サムネイルURL</label>
+              <input
+                type="url"
+                value={thumbnailUrl}
+                onChange={(e) => setThumbnailUrl(e.target.value)}
+                placeholder="https://..."
+                style={styles.input}
+              />
+            </div>
+
+            {/* プラットフォーム */}
+            <div style={styles.field}>
+              <label style={styles.label}>プラットフォーム</label>
+              <input
+                type="text"
+                value={platform}
+                onChange={(e) => setPlatform(e.target.value)}
+                placeholder="YouTube, TikTok, etc."
                 style={styles.input}
               />
             </div>
@@ -151,6 +252,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '20px',
     maxWidth: '500px',
     margin: '0 auto',
+    paddingBottom: '40px',
   },
   content: {
     textAlign: 'center',
@@ -230,6 +332,44 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '16px',
     fontFamily: 'inherit',
     outline: 'none',
+  },
+  fetchingText: {
+    fontSize: '13px',
+    color: '#e07b4c',
+    marginTop: '8px',
+  },
+  preview: {
+    marginBottom: '24px',
+  },
+  previewLabel: {
+    fontSize: '14px',
+    fontWeight: 600,
+    color: '#5c4a3a',
+    marginBottom: '8px',
+  },
+  previewCard: {
+    background: '#fff',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    boxShadow: '0 2px 8px rgba(92, 74, 58, 0.08)',
+  },
+  previewInfo: {
+    padding: '12px 16px',
+  },
+  previewPlatform: {
+    display: 'inline-block',
+    padding: '4px 8px',
+    background: '#faf8f5',
+    borderRadius: '4px',
+    fontSize: '12px',
+    color: '#8b7355',
+    marginBottom: '8px',
+  },
+  previewTitle: {
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#3d3428',
+    margin: 0,
   },
   submitButton: {
     width: '100%',

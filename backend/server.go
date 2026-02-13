@@ -10,6 +10,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/bduha184/tsukuruka/auth"
 	"github.com/bduha184/tsukuruka/graph"
+	"github.com/bduha184/tsukuruka/ogp"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -27,6 +28,9 @@ func main() {
 	// Database connection
 	var db *pgxpool.Pool
 	dbURL := os.Getenv("SUPABASE_DB_URL")
+	if dbURL == "" {
+		dbURL = os.Getenv("DATABASE_URL")
+	}
 	if dbURL != "" {
 		var err error
 		db, err = pgxpool.New(context.Background(), dbURL)
@@ -60,6 +64,9 @@ func main() {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
+
+	// OGP endpoint
+	r.Get("/api/ogp", ogp.Handler)
 
 	// GraphQL
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
