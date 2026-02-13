@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface MenuProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface MenuProps {
 
 export default function Menu({ isOpen, onClose }: MenuProps) {
   const router = useRouter()
+  const { user } = useAuth()
 
   const navigate = (path: string) => {
     onClose()
@@ -27,6 +29,15 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
             <span style={{ ...styles.closeLine, transform: 'rotate(-45deg)' }} />
           </div>
         </button>
+
+        {/* ユーザー情報 */}
+        {user && (
+          <div style={styles.userInfo}>
+            <span style={styles.userIcon}>👤</span>
+            <span style={styles.userName}>{user.email?.split('@')[0] || 'ユーザー'}</span>
+          </div>
+        )}
+
         <nav style={styles.nav}>
           <button onClick={() => navigate('/')} style={styles.navItem}>
             🏠 ホーム
@@ -42,7 +53,7 @@ export default function Menu({ isOpen, onClose }: MenuProps) {
           </button>
           <div style={styles.divider} />
           <button onClick={() => navigate('/login')} style={styles.navItem}>
-            🔐 ログイン
+            {user ? '👤 アカウント' : '🔐 ログイン'}
           </button>
           <button onClick={() => navigate('/about')} style={styles.navItem}>
             ℹ️ このアプリについて
@@ -99,8 +110,26 @@ const styles: { [key: string]: React.CSSProperties } = {
     background: '#5c4a3a',
     borderRadius: '1px',
   },
+  userInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '16px',
+    marginTop: '40px',
+    marginBottom: '8px',
+    background: '#faf8f5',
+    borderRadius: '12px',
+  },
+  userIcon: {
+    fontSize: '24px',
+  },
+  userName: {
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#3d3428',
+  },
   nav: {
-    marginTop: '60px',
+    marginTop: '12px',
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
@@ -117,6 +146,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#3d3428',
     cursor: 'pointer',
     textAlign: 'left',
+    fontFamily: 'inherit',
     transition: 'background 0.2s',
   },
   divider: {

@@ -6,8 +6,10 @@ toolchain go1.23.12
 
 require (
 	github.com/99designs/gqlgen v0.17.45
+	github.com/MicahParks/keyfunc/v2 v2.1.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-chi/cors v1.2.2
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/vektah/gqlparser/v2 v2.5.11
 )
