@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -32,17 +33,24 @@ func main() {
 		dbURL = os.Getenv("DATABASE_URL")
 	}
 	if dbURL != "" {
-		var err error
-		db, err = pgxpool.New(context.Background(), dbURL)
+		config, err := pgxpool.ParseConfig(dbURL)
 		if err != nil {
-			log.Printf("⚠️  Database connection failed: %v", err)
+			log.Printf("⚠️  Failed to parse database URL: %v", err)
 		} else {
-			if err := db.Ping(context.Background()); err != nil {
-				log.Printf("⚠️  Database ping failed: %v", err)
+			// Prepared statement を無効化（Supabase Pooler対応）
+			config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
+			db, err = pgxpool.NewWithConfig(context.Background(), config)
+			if err != nil {
+				log.Printf("⚠️  Database connection failed: %v", err)
 			} else {
-				log.Println("✅ Database connected")
+				if err := db.Ping(context.Background()); err != nil {
+					log.Printf("⚠️  Database ping failed: %v", err)
+				} else {
+					log.Println("✅ Database connected")
+				}
+				defer db.Close()
 			}
-			defer db.Close()
 		}
 	}
 
@@ -50,22 +58,16 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	// r.Use(cors.Handler(cors.Options{
-	// 	AllowedOrigins:   []string{"http://localhost:3000"},
-	// 	AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-	// 	AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
-	// 	AllowCredentials: true,
-	// }))
 	r.Use(cors.Handler(cors.Options{
-    AllowedOrigins:   []string{
-        "http://localhost:3000",
-        "https://tsukuruka-4iekluclw-bduha184s-projects.vercel.app",
-        "https://*.vercel.app",
-    },
-    AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-    AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
-    AllowCredentials: true,
-}))
+		AllowedOrigins: []string{
+			"http://localhost:3000",
+			"https://tsukuruka.vercel.app",
+			"https://*.vercel.app",
+		},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowCredentials: true,
+	}))
 
 	// Auth middleware
 	r.Use(auth.Middleware)
@@ -77,7 +79,6 @@ func main() {
 
 	// OGP endpoint
 	r.Get("/api/ogp", ogp.Handler)
-	r.Get("/api/image-proxy", ogp.ImageProxyHandler)  // ← 追加
 
 	// GraphQL
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
