@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, HttpLink, ApolloLink } from '@apollo/client'
+import { ApolloClient, InMemoryCache, HttpLink, ApolloLink, Observable } from '@apollo/client'
 import { supabase } from './supabase'
 
 const httpLink = new HttpLink({
@@ -7,32 +7,33 @@ const httpLink = new HttpLink({
     : 'http://localhost:8080/query',
 })
 
-// 認証ヘッダーを追加するミドルウェア
+// 認証ヘッダーを追加するミドルウェア（非同期対応）
 const authLink = new ApolloLink((operation, forward) => {
-  // 同期的にlocalStorageからトークンを取得
-  let token = ''
+  return new Observable(observer => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const token = session?.access_token || ''
 
-  if (typeof window !== 'undefined') {
-    const storageKey = `sb-bnrmblkljryoeaxjrbfi-auth-token`
-    const stored = localStorage.getItem(storageKey)
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored)
-        token = parsed.access_token || ''
-      } catch (e) {
-        console.error('Failed to parse auth token:', e)
-      }
-    }
-  }
+      operation.setContext(({ headers = {} }) => ({
+        headers: {
+          ...headers,
+          authorization: token ? `Bearer ${token}` : '',
+        },
+      }))
 
-  operation.setContext(({ headers = {} }) => ({
-    headers: {
-      ...headers,
-      authorization: token ? `Bearer ${token}` : '',
-    },
-  }))
-
-  return forward(operation)
+      forward(operation).subscribe({
+        next: observer.next.bind(observer),
+        error: observer.error.bind(observer),
+        complete: observer.complete.bind(observer),
+      })
+    }).catch(error => {
+      console.error('Failed to get session:', error)
+      forward(operation).subscribe({
+        next: observer.next.bind(observer),
+        error: observer.error.bind(observer),
+        complete: observer.complete.bind(observer),
+      })
+    })
+  })
 })
 
 export const apolloClient = new ApolloClient({
@@ -44,8 +45,3 @@ export const apolloClient = new ApolloClient({
     },
   },
 })
-
-// キャッシュをクリアする関数（ログイン/ログアウト時に使用）
-export const clearApolloCache = () => {
-  apolloClient.clearStore()
-}

@@ -59,8 +59,8 @@ func main() {
 	r.Use(cors.Handler(cors.Options{
     AllowedOrigins:   []string{
         "http://localhost:3000",
-        "https://tsukuruka-4iekluclw-bduha184s-projects.vercel.app",  // あなたのVercelドメイン
-        "https://*.vercel.app", // プレビューデプロイ用
+        "https://tsukuruka-4iekluclw-bduha184s-projects.vercel.app",
+        "https://*.vercel.app",
     },
     AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
     AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
