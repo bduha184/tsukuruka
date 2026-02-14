@@ -84,7 +84,7 @@ func (r *mutationResolver) UpdateRecipeStatus(ctx context.Context, id string, st
 	query := `
 		UPDATE recipes SET status = $1, updated_at = NOW()
 		WHERE id = $2 AND user_id = $3
-		RETURNING id, url, title, thumbnail_url, platform, category_id, estimated_cost, eating_out_cost, status, suggested_at, created_at, updated_at
+		RETURNING id, url, title, thumbnail_url, platform, category_id, estimated_cost, eating_out_cost, status, suggested_at::text, created_at, updated_at
 	`
 
 	var recipe model.Recipe
@@ -127,6 +127,46 @@ func (r *mutationResolver) DeleteRecipe(ctx context.Context, id string) (bool, e
 		return false, err
 	}
 	return result.RowsAffected() > 0, nil
+}
+
+// SkipRecipeToday is the resolver for the skipRecipeToday field.
+func (r *mutationResolver) SkipRecipeToday(ctx context.Context, id string) (*model.Recipe, error) {
+	userID, err := getUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query := `
+		UPDATE recipes SET suggested_at = CURRENT_DATE, updated_at = NOW()
+		WHERE id = $1 AND user_id = $2
+		RETURNING id, url, title, thumbnail_url, platform, category_id, estimated_cost, eating_out_cost, status, suggested_at::text, created_at, updated_at
+	`
+
+	var recipe model.Recipe
+	var categoryID *string
+	var statusStr string
+	err = r.DB.QueryRow(ctx, query, id, userID).Scan(
+		&recipe.ID, &recipe.URL, &recipe.Title, &recipe.ThumbnailURL, &recipe.Platform,
+		&categoryID, &recipe.EstimatedCost, &recipe.EatingOutCost, &statusStr, &recipe.SuggestedAt,
+		&recipe.CreatedAt, &recipe.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	recipe.Status = model.RecipeStatus(statusStr)
+
+	// カテゴリ情報を取得
+	if categoryID != nil {
+		var cat model.Category
+		err := r.DB.QueryRow(ctx, "SELECT id, name, icon, eating_out_cost FROM categories WHERE id = $1", *categoryID).
+			Scan(&cat.ID, &cat.Name, &cat.Icon, &cat.EatingOutCost)
+		if err == nil {
+			recipe.Category = &cat
+		}
+	}
+
+	return &recipe, nil
 }
 
 // Health is the resolver for the health field.
@@ -174,7 +214,7 @@ func (r *queryResolver) Recipes(ctx context.Context, status *model.RecipeStatus)
 
 	query := `
 		SELECT r.id, r.url, r.title, r.thumbnail_url, r.platform,
-		       r.estimated_cost, r.eating_out_cost, r.status, r.suggested_at,
+		       r.estimated_cost, r.eating_out_cost, r.status, r.suggested_at::text,
 		       r.created_at, r.updated_at,
 		       c.id, c.name, c.icon, c.eating_out_cost
 		FROM recipes r
@@ -238,7 +278,7 @@ func (r *queryResolver) Recipe(ctx context.Context, id string) (*model.Recipe, e
 
 	query := `
 		SELECT r.id, r.url, r.title, r.thumbnail_url, r.platform,
-		       r.estimated_cost, r.eating_out_cost, r.status, r.suggested_at,
+		       r.estimated_cost, r.eating_out_cost, r.status, r.suggested_at::text,
 		       r.created_at, r.updated_at,
 		       c.id, c.name, c.icon, c.eating_out_cost
 		FROM recipes r
@@ -285,9 +325,9 @@ func (r *queryResolver) TodayRecipe(ctx context.Context) (*model.Recipe, error) 
 	// suggested_at が今日でない SAVED レシピを取得
 	query := `
 		SELECT r.id, r.url, r.title, r.thumbnail_url, r.platform,
-					r.estimated_cost, r.eating_out_cost, r.status, r.suggested_at,
-					r.created_at, r.updated_at,
-					c.id, c.name, c.icon, c.eating_out_cost
+		       r.estimated_cost, r.eating_out_cost, r.status, r.suggested_at::text,
+		       r.created_at, r.updated_at,
+		       c.id, c.name, c.icon, c.eating_out_cost
 		FROM recipes r
 		LEFT JOIN categories c ON r.category_id = c.id
 		WHERE r.user_id = $1
@@ -320,45 +360,6 @@ func (r *queryResolver) TodayRecipe(ctx context.Context) (*model.Recipe, error) 
 			Name:          *catName,
 			Icon:          *catIcon,
 			EatingOutCost: *catCost,
-		}
-	}
-
-	return &recipe, nil
-}
-
-func (r *mutationResolver) SkipRecipeToday(ctx context.Context, id string) (*model.Recipe, error) {
-	userID, err := getUserID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	query := `
-		UPDATE recipes SET suggested_at = CURRENT_DATE, updated_at = NOW()
-		WHERE id = $1 AND user_id = $2
-		RETURNING id, url, title, thumbnail_url, platform, category_id, estimated_cost, eating_out_cost, status, suggested_at, created_at, updated_at
-	`
-
-	var recipe model.Recipe
-	var categoryID *string
-	var statusStr string
-	err = r.DB.QueryRow(ctx, query, id, userID).Scan(
-		&recipe.ID, &recipe.URL, &recipe.Title, &recipe.ThumbnailURL, &recipe.Platform,
-		&categoryID, &recipe.EstimatedCost, &recipe.EatingOutCost, &statusStr, &recipe.SuggestedAt,
-		&recipe.CreatedAt, &recipe.UpdatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	recipe.Status = model.RecipeStatus(statusStr)
-
-	// カテゴリ情報を取得
-	if categoryID != nil {
-		var cat model.Category
-		err := r.DB.QueryRow(ctx, "SELECT id, name, icon, eating_out_cost FROM categories WHERE id = $1", *categoryID).
-			Scan(&cat.ID, &cat.Name, &cat.Icon, &cat.EatingOutCost)
-		if err == nil {
-			recipe.Category = &cat
 		}
 	}
 
