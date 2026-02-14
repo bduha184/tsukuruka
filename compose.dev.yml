@@ -3,6 +3,7 @@ services:
     container_name: tsukuruka-backend
     build:
       context: ./backend
+      dockerfile: Dockerfile
       target: dev
     env_file:
       - .env

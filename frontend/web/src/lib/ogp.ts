@@ -17,7 +17,14 @@ export async function fetchOGP(url: string): Promise<OGPData | null> {
     if (!response.ok) {
       throw new Error('Failed to fetch OGP')
     }
-    return await response.json()
+    const data: OGPData = await response.json()
+
+    // プロキシURLの場合、フルURLに変換
+    if (data.image && data.image.startsWith('/api/image-proxy')) {
+      data.image = `${API_URL}${data.image}`
+    }
+
+    return data
   } catch (error) {
     console.error('OGP fetch error:', error)
     return null

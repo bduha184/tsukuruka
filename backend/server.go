@@ -67,6 +67,7 @@ func main() {
 
 	// OGP endpoint
 	r.Get("/api/ogp", ogp.Handler)
+	r.Get("/api/image-proxy", ogp.ImageProxyHandler)  // ← 追加
 
 	// GraphQL
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
