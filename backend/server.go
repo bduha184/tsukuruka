@@ -50,12 +50,22 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	// r.Use(cors.Handler(cors.Options{
+	// 	AllowedOrigins:   []string{"http://localhost:3000"},
+	// 	AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	// 	AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+	// 	AllowCredentials: true,
+	// }))
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
-		AllowCredentials: true,
-	}))
+    AllowedOrigins:   []string{
+        "http://localhost:3000",
+        "https://tsukuruka-4iekluclw-bduha184s-projects.vercel.app",  // あなたのVercelドメイン
+        "https://*.vercel.app", // プレビューデプロイ用
+    },
+    AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+    AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+    AllowCredentials: true,
+}))
 
 	// Auth middleware
 	r.Use(auth.Middleware)
