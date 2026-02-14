@@ -54,6 +54,7 @@ type Mutation {
   createRecipe(input: CreateRecipeInput!): Recipe!
   updateRecipeStatus(id: ID!, status: RecipeStatus!): Recipe!
   deleteRecipe(id: ID!): Boolean!
+  skipRecipeToday(id: ID!): Recipe!
 }
 
 # ========== Inputs ==========

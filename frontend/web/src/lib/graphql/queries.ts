@@ -86,6 +86,6 @@ export const TODAY_RECIPE_QUERY = gql`
       estimatedCost
       eatingOutCost
       status
-    }
+      suggestedAt
   }
 `;

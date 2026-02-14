@@ -64,6 +64,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CreateRecipe       func(childComplexity int, input model.CreateRecipeInput) int
 		DeleteRecipe       func(childComplexity int, id string) int
+		SkipRecipeToday    func(childComplexity int, id string) int
 		UpdateRecipeStatus func(childComplexity int, id string, status model.RecipeStatus) int
 	}
 
@@ -95,6 +96,7 @@ type MutationResolver interface {
 	CreateRecipe(ctx context.Context, input model.CreateRecipeInput) (*model.Recipe, error)
 	UpdateRecipeStatus(ctx context.Context, id string, status model.RecipeStatus) (*model.Recipe, error)
 	DeleteRecipe(ctx context.Context, id string) (bool, error)
+	SkipRecipeToday(ctx context.Context, id string) (*model.Recipe, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (*model.Health, error)
@@ -195,6 +197,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteRecipe(childComplexity, args["id"].(string)), true
+
+	case "Mutation.skipRecipeToday":
+		if e.complexity.Mutation.SkipRecipeToday == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_skipRecipeToday_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SkipRecipeToday(childComplexity, args["id"].(string)), true
 
 	case "Mutation.updateRecipeStatus":
 		if e.complexity.Mutation.UpdateRecipeStatus == nil {
@@ -478,6 +492,21 @@ func (ec *executionContext) field_Mutation_createRecipe_args(ctx context.Context
 }
 
 func (ec *executionContext) field_Mutation_deleteRecipe_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_skipRecipeToday_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -1118,6 +1147,87 @@ func (ec *executionContext) fieldContext_Mutation_deleteRecipe(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteRecipe_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_skipRecipeToday(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_skipRecipeToday(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SkipRecipeToday(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Recipe)
+	fc.Result = res
+	return ec.marshalNRecipe2ᚖgithubᚗcomᚋbduha184ᚋtsukurukaᚋgraphᚋmodelᚐRecipe(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_skipRecipeToday(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Recipe_id(ctx, field)
+			case "url":
+				return ec.fieldContext_Recipe_url(ctx, field)
+			case "title":
+				return ec.fieldContext_Recipe_title(ctx, field)
+			case "thumbnailUrl":
+				return ec.fieldContext_Recipe_thumbnailUrl(ctx, field)
+			case "platform":
+				return ec.fieldContext_Recipe_platform(ctx, field)
+			case "category":
+				return ec.fieldContext_Recipe_category(ctx, field)
+			case "estimatedCost":
+				return ec.fieldContext_Recipe_estimatedCost(ctx, field)
+			case "eatingOutCost":
+				return ec.fieldContext_Recipe_eatingOutCost(ctx, field)
+			case "status":
+				return ec.fieldContext_Recipe_status(ctx, field)
+			case "suggestedAt":
+				return ec.fieldContext_Recipe_suggestedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Recipe_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Recipe_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Recipe", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_skipRecipeToday_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4084,6 +4194,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteRecipe":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteRecipe(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "skipRecipeToday":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_skipRecipeToday(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

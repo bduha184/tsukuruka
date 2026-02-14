@@ -39,3 +39,12 @@ export const DELETE_RECIPE_MUTATION = gql`
     deleteRecipe(id: $id)
   }
 `;
+
+export const SKIP_RECIPE_TODAY_MUTATION = gql`
+  mutation SkipRecipeToday($id: ID!) {
+    skipRecipeToday(id: $id) {
+      id
+      suggestedAt
+    }
+  }
+`;
