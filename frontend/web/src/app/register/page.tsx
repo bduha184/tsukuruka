@@ -10,7 +10,7 @@ import {
   CATEGORIES_QUERY,
   RECIPES_QUERY
 } from '@/lib/graphql'
-import { Category } from '@/lib/types'
+import { Category } from '@/types/graphql'
 import { fetchOGP, OGPData } from '@/lib/ogp'
 
 export default function RegisterPage() {
