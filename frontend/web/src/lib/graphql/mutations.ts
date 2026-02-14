@@ -22,7 +22,7 @@ export const CREATE_RECIPE_MUTATION = gql`
       createdAt
     }
   }
-`;
+`
 
 export const UPDATE_RECIPE_STATUS_MUTATION = gql`
   mutation UpdateRecipeStatus($id: ID!, $status: RecipeStatus!) {
@@ -32,13 +32,13 @@ export const UPDATE_RECIPE_STATUS_MUTATION = gql`
       updatedAt
     }
   }
-`;
+`
 
 export const DELETE_RECIPE_MUTATION = gql`
   mutation DeleteRecipe($id: ID!) {
     deleteRecipe(id: $id)
   }
-`;
+`
 
 export const SKIP_RECIPE_TODAY_MUTATION = gql`
   mutation SkipRecipeToday($id: ID!) {
@@ -47,4 +47,4 @@ export const SKIP_RECIPE_TODAY_MUTATION = gql`
       suggestedAt
     }
   }
-`;
+`

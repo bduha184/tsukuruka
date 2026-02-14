@@ -10,7 +10,7 @@ export const HEALTH_QUERY = gql`
       timestamp
     }
   }
-`;
+`
 
 export const CATEGORIES_QUERY = gql`
   query Categories {
@@ -21,7 +21,7 @@ export const CATEGORIES_QUERY = gql`
       eatingOutCost
     }
   }
-`;
+`
 
 export const RECIPES_QUERY = gql`
   query Recipes($status: RecipeStatus) {
@@ -40,11 +40,12 @@ export const RECIPES_QUERY = gql`
       estimatedCost
       eatingOutCost
       status
+      suggestedAt
       createdAt
       updatedAt
     }
   }
-`;
+`
 
 export const RECIPE_QUERY = gql`
   query Recipe($id: ID!) {
@@ -63,11 +64,12 @@ export const RECIPE_QUERY = gql`
       estimatedCost
       eatingOutCost
       status
+      suggestedAt
       createdAt
       updatedAt
     }
   }
-`;
+`
 
 export const TODAY_RECIPE_QUERY = gql`
   query TodayRecipe {
@@ -87,5 +89,6 @@ export const TODAY_RECIPE_QUERY = gql`
       eatingOutCost
       status
       suggestedAt
+    }
   }
-`;
+`
