@@ -2,15 +2,10 @@ services:
   backend:
     build:
       context: ./backend
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/tsukuruka?sslmode=disable
-      PORT: 8080
     ports:
       - "8080:8080"
     networks:
       - app-network
-    depends_on:
-      - db
 
   web:
     build:
@@ -20,21 +15,13 @@ services:
     depends_on:
       - backend
 
-  # mobile:
-  #   build:
-  #     context: ./frontend/mobile
-  #   networks:
-  #     - app-network
-  #   depends_on:
-  #     - backend
-
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: tsukuruka
+  mobile:
+    build:
+      context: ./frontend/mobile
     networks:
       - app-network
+    depends_on:
+      - backend
+
 networks:
   app-network:

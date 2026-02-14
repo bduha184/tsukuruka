@@ -1,43 +1,27 @@
-// ===============================================
-// Query / Mutation Response and Variables Types
-// ===============================================
-
-export type User = {
+export interface Category {
   id: string;
   name: string;
-};
+  icon: string;
+  eatingOutCost: number;
+}
 
-export type Recipe = {
+export interface Recipe {
   id: string;
-  title: string;
-  status: boolean;
-  category: {
-    name: string;
-    icon: string;
-  }
-};
+  url: string;
+  title: string | null;
+  thumbnailUrl: string | null;
+  platform: string | null;
+  category: Category | null;
+  estimatedCost: number | null;
+  eatingOutCost: number | null;
+  status: 'SAVED' | 'COOKED' | 'DELETED';
+  suggestedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
-
-// ---------- Queries ----------
-export type RecipesQueryData = {
-  recipes: Recipe[];
-};
-
-// ---------- Mutations ----------
-export type CreateRecipeMutationResponse = {
-  createRecipe: {
-    id: string;
-    title: string;
-    status: boolean;
-    user: {
-      id: string;
-      name: string;
-    }
-  }
-};
-
-export type CreateRecipeVariables = {
-  input: {
-    url: string;
-  }
-};
+export interface Health {
+  status: string;
+  database: string;
+  timestamp: string;
+}

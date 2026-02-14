@@ -1,15 +1,22 @@
-import { ApolloWrapper } from "@/lib/ApolloWrapper";
+import type { Metadata } from 'next'
+import { Providers } from './providers'
+import '@/styles/globals.css'
+
+export const metadata: Metadata = {
+  title: 'つくりおき',
+  description: '作りたい料理を思い出させるアプリ',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html>
+    <html lang="ja">
       <body>
-        <ApolloWrapper>{children}</ApolloWrapper>
+        <Providers>{children}</Providers>
       </body>
     </html>
-  );
+  )
 }

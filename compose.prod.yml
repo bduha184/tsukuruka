@@ -19,14 +19,5 @@ services:
     # 通常 mobile は本番では起動しない
     deploy:
       replicas: 0
-
-  db:
-    environment:
-      POSTGRES_USER: produser
-      POSTGRES_PASSWORD: prodpass
-      POSTGRES_DB: camapp
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 volumes:
   postgres_data:
