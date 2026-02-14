@@ -39,6 +39,8 @@ CMD ["go", "run", "."]
 FROM debian:bullseye-slim AS prod
 WORKDIR /app
 
+# CA証明書（HTTPS通信に必要）
+RUN apk add --no-cache ca-certificates
 # Chromium と必要なライブラリをインストール（本番用）
 RUN apt-get update && apt-get install -y \
     chromium \
