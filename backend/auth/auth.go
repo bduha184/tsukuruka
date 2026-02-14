@@ -104,3 +104,27 @@ func Middleware(next http.Handler) http.Handler {
 		}
 
 		claims, err := ValidateSupabaseToken(parts[1])
+		if err != nil {
+			log.Printf("🔐 Token validation error: %v", err)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		log.Printf("🔐 Authenticated user: %s (%s)", claims.Sub, claims.Email)
+
+		ctx := context.WithValue(r.Context(), userContextKey, &UserContext{
+			UserID: claims.Sub,
+			Email:  claims.Email,
+		})
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetUserFromContext はコンテキストからユーザー情報を取得
+func GetUserFromContext(ctx context.Context) *UserContext {
+	if user, ok := ctx.Value(userContextKey).(*UserContext); ok {
+		return user
+	}
+	return nil
+}
