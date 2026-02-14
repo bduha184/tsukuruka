@@ -7,34 +7,43 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/MicahParks/keyfunc/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwks *keyfunc.JWKS
+var (
+	jwks     *keyfunc.JWKS
+	jwksOnce sync.Once
+	jwksErr  error
+)
 
-func init() {
-	supabaseURL := os.Getenv("NEXT_PUBLIC_SUPABASE_URL")
-	if supabaseURL == "" {
-		supabaseURL = "https://bnrmblkljryoeaxjrbfi.supabase.co"
-	}
+// initJWKS は JWKS を遅延初期化
+func initJWKS() (*keyfunc.JWKS, error) {
+	jwksOnce.Do(func() {
+		supabaseURL := os.Getenv("NEXT_PUBLIC_SUPABASE_URL")
+		if supabaseURL == "" {
+			supabaseURL = "https://bnrmblkljryoeaxjrbfi.supabase.co"
+		}
 
-	jwksURL := supabaseURL + "/auth/v1/.well-known/jwks.json"
-	log.Printf("🔐 Loading JWKS from: %s", jwksURL)
+		jwksURL := supabaseURL + "/auth/v1/.well-known/jwks.json"
+		log.Printf("🔐 Loading JWKS from: %s", jwksURL)
 
-	var err error
-	jwks, err = keyfunc.Get(jwksURL, keyfunc.Options{
-		RefreshInterval: time.Hour,
-		RefreshTimeout:  10 * time.Second,
+		jwks, jwksErr = keyfunc.Get(jwksURL, keyfunc.Options{
+			RefreshInterval: time.Hour,
+			RefreshTimeout:  30 * time.Second,
+		})
+
+		if jwksErr != nil {
+			log.Printf("⚠️  Failed to load JWKS: %v", jwksErr)
+		} else {
+			log.Println("✅ JWKS loaded successfully")
+		}
 	})
-	if err != nil {
-		log.Printf("⚠️  Failed to load JWKS: %v", err)
-		return
-	}
 
-	log.Println("✅ JWKS loaded successfully")
+	return jwks, jwksErr
 }
 
 // Claims はSupabase JWTのペイロード
@@ -57,11 +66,15 @@ const userContextKey contextKey = "user"
 
 // ValidateSupabaseToken はSupabaseのJWTトークンを検証
 func ValidateSupabaseToken(tokenString string) (*Claims, error) {
-	if jwks == nil {
-		return nil, errors.New("JWKS not initialized")
+	jwksInstance, err := initJWKS()
+	if err != nil {
+		return nil, err
+	}
+	if jwksInstance == nil {
+		return nil, errors.New("JWKS not available")
 	}
 
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, jwks.Keyfunc)
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, jwksInstance.Keyfunc)
 	if err != nil {
 		return nil, err
 	}
@@ -91,27 +104,3 @@ func Middleware(next http.Handler) http.Handler {
 		}
 
 		claims, err := ValidateSupabaseToken(parts[1])
-		if err != nil {
-			log.Printf("🔐 Token validation error: %v", err)
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		log.Printf("🔐 Authenticated user: %s (%s)", claims.Sub, claims.Email)
-
-		ctx := context.WithValue(r.Context(), userContextKey, &UserContext{
-			UserID: claims.Sub,
-			Email:  claims.Email,
-		})
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// GetUserFromContext はコンテキストからユーザー情報を取得
-func GetUserFromContext(ctx context.Context) *UserContext {
-	if user, ok := ctx.Value(userContextKey).(*UserContext); ok {
-		return user
-	}
-	return nil
-}
