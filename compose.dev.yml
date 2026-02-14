@@ -29,7 +29,7 @@ services:
     volumes:
       - ./frontend/mobile/src:/app/src
     env_file:
-      - ./frontend/mobile/.env.dev
+      - .env
     ports:
       - "19000:19000"
       - "19001:19001"
